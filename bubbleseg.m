@@ -1,14 +1,19 @@
 clear
 
-[comicImg, map] = imread('dilbert/2014-12-23.gif', 'gif');
+%[comicImg, map] = imread('dilbert/2014-12-23.gif', 'gif');
+[comicImg, map] = imread('garfield/27-1-1983.gif', 'gif');
 
-figure;
+figure(10);
 imshow(comicImg, map);
+
+comicImg = rgb2gray(ind2rgb(comicImg, map));
+
+filteredImg = medfilt2(comicImg,[3 3]);
+figure(11), imshow(filteredImg)
 
 % Binarise image
 
 bwImg = im2bw(comicImg, 0.3);
-imshow(bwImg)
 
 figure(23);
 imshow(bwImg);
@@ -18,7 +23,7 @@ imshow(bwImg);
 CC = bwconncomp(~bwImg);
 boundingBoxes = []; % [x, y, width, height]
 for i = 1:size(CC.PixelIdxList, 2)
-   comicImg(CC.PixelIdxList{i}) = rand * 255;
+   % comicImg(CC.PixelIdxList{i}) = rand * 255;
    minX = idivide(min(CC.PixelIdxList{i}), uint32(size(comicImg, 1)), 'floor');
    minY = min(mod(CC.PixelIdxList{i}, size(comicImg, 1)));
    maxX = idivide(max(CC.PixelIdxList{i}), uint32(size(comicImg, 1)), 'floor');
@@ -53,12 +58,68 @@ plot(boundingBoxCentres(:,1), boundingBoxCentres(:,2), 'r+');
 averageBoxWidth = sum(filteredBoundingBoxes(:,3)) / size(filteredBoundingBoxes,1);
 averageBoxHeight = sum(filteredBoundingBoxes(:,4)) / size(filteredBoundingBoxes,1);
 
-mergedBoundingBoxes = [];
+% The 5th column is merged box which each box is a part of. Zero indicates it has not
+% been merged.
+filteredBoundingBoxes = [filteredBoundingBoxes zeros(size(filteredBoundingBoxes,1),1)];
 pairwiseDistances = pdist(boundingBoxCentres);
-[sortedPairwiseDistances, indices] = sort(pairwiseDistances);
-sortedPairwiseDistances = sortedPairwiseDistances(sortedPairwiseDistances < 2 * (averageBoxWidth + averageBoxHeight));
-indices = indices(1:size(sortedPairwiseDistances,2))
-sortedBoundingBoxes = filteredBoundingBoxes(indices,:);
+% convert distance vector into distance matrix
+distanceMatrix = squareform(pairwiseDistances);
+
+for i = 1:size(distanceMatrix,1)
+    for j = (i+1):size(distanceMatrix,1)
+        if distanceMatrix(i,j) < 1.5 * (averageBoxWidth + averageBoxHeight)
+            % merge boxes i and j
+            parentOfBoxI = i;
+            parentOfBoxJ = j;
+           
+            % find the biggest bounding box that the ith box has been merged
+            % into
+            while filteredBoundingBoxes(parentOfBoxI,5) ~= 0
+                parentOfBoxI = filteredBoundingBoxes(parentOfBoxI,5);
+            end
+            
+            % find the biggest bounding box that the jth box has been
+            % merged into
+            while filteredBoundingBoxes(parentOfBoxJ,5) ~= 0
+                parentOfBoxJ = filteredBoundingBoxes(parentOfBoxJ,5);
+            end
+            
+            % if the two parent bounding boxes are not the same, merge them
+            % to form a new bounding box
+            if parentOfBoxI ~= parentOfBoxJ
+                newBox = mergeBoxes(filteredBoundingBoxes(parentOfBoxI,:), filteredBoundingBoxes(parentOfBoxJ,:));
+                filteredBoundingBoxes = [filteredBoundingBoxes; newBox];
+                filteredBoundingBoxes(parentOfBoxI,5) = size(filteredBoundingBoxes,1);
+                filteredBoundingBoxes(parentOfBoxJ,5) = size(filteredBoundingBoxes,1);
+            end
+        end 
+    end
+end
+
+figure(30);
+imshow(bwImg);
+
+filteredBoundingBoxes = filteredBoundingBoxes(filteredBoundingBoxes(:,5) == 0,1:4);
+for i = 1:size(filteredBoundingBoxes,1)
+    rectangle('Position', filteredBoundingBoxes(i,:));
+end
+
+comicImg = imresize(comicImg, 4, 'lanczos3');
+
+figure(31);
+imshow(comicImg);
+
+filteredBoundingBoxes = filteredBoundingBoxes * 4;
+filteredBoundingBoxes(:,1:2) = filteredBoundingBoxes(:,1:2) - 5;
+filteredBoundingBoxes(:,3:4) = filteredBoundingBoxes(:,3:4) + 10;
+for i = 1:size(filteredBoundingBoxes,1)
+    rectangle('Position', filteredBoundingBoxes(i,:));
+end
+
+
+txt = ocr(comicImg, filteredBoundingBoxes);
+txt.Text
+
 
 %{
 
