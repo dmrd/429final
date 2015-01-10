@@ -2,6 +2,7 @@ clear
 
 %[comicImg, map] = imread('dilbert/2014-12-23.gif', 'gif');
 [comicImg, map] = imread('garfield/27-1-1983.gif', 'gif');
+%[comicImg, map] = imread('garfield/garfieldminusgarfield.jpg', 'jpg');
 
 figure(10);
 imshow(comicImg, map);
@@ -65,6 +66,7 @@ pairwiseDistances = pdist(boundingBoxCentres);
 % convert distance vector into distance matrix
 distanceMatrix = squareform(pairwiseDistances);
 
+% Merge the bounding boxes together into paragraph bounding boxes
 for i = 1:size(distanceMatrix,1)
     for j = (i+1):size(distanceMatrix,1)
         if distanceMatrix(i,j) < 1.5 * (averageBoxWidth + averageBoxHeight)
@@ -104,11 +106,14 @@ for i = 1:size(filteredBoundingBoxes,1)
     rectangle('Position', filteredBoundingBoxes(i,:));
 end
 
+% Upsample the image to improve OCR perferformance
 comicImg = imresize(comicImg, 4, 'lanczos3');
 
 figure(31);
 imshow(comicImg);
 
+% Resize the bounding boxes accordingly, and give a little bit of wriggle
+% room.
 filteredBoundingBoxes = filteredBoundingBoxes * 4;
 filteredBoundingBoxes(:,1:2) = filteredBoundingBoxes(:,1:2) - 5;
 filteredBoundingBoxes(:,3:4) = filteredBoundingBoxes(:,3:4) + 10;
@@ -116,9 +121,28 @@ for i = 1:size(filteredBoundingBoxes,1)
     rectangle('Position', filteredBoundingBoxes(i,:));
 end
 
-
+% Perform the OCR
 txt = ocr(comicImg, filteredBoundingBoxes);
+
+% Use the results of the OCR to discard boxes which don't contain text.
+textBoundingBoxes = [];
+for i = 1:size(txt)
+    if size(txt(i).Text) > 0
+        textBoundingBoxes = [textBoundingBoxes; filteredBoundingBoxes(i,:)];
+    end
+end
+
+figure(32);
+imshow(comicImg);
+for i = 1:size(textBoundingBoxes,1)
+    rectangle('Position', textBoundingBoxes(i,:));
+end
+
+% Reperform the OCR
+txt = ocr(comicImg, textBoundingBoxes);
 txt.Text
+
+%comicImg(filteredBoundingBoxes(:,1):(filteredBoundingBoxes(:,1)+filteredBoundingBoxes(:,3)), filteredBoundingBoxes(:,2):(filteredBoundingBoxes(:,2)+filteredBoundingBoxes(:,4))) = 1;
 
 
 %{
