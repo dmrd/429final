@@ -61,7 +61,10 @@ averageBoxHeight = sum(filteredBoundingBoxes(:,4)) / size(filteredBoundingBoxes,
 
 % The 5th column is merged box which each box is a part of. Zero indicates it has not
 % been merged.
-filteredBoundingBoxes = [filteredBoundingBoxes zeros(size(filteredBoundingBoxes,1),1)];
+numOriginalBoxes = size(filteredBoundingBoxes,1);
+filteredBoundingBoxes = [filteredBoundingBoxes zeros(numOriginalBoxes,1)];
+filteredBoundingBoxes = [filteredBoundingBoxes [1:numOriginalBoxes]'];
+numOriginalBoxes = size(filteredBoundingBoxes,1);
 pairwiseDistances = pdist(boundingBoxCentres);
 % convert distance vector into distance matrix
 distanceMatrix = squareform(pairwiseDistances);
@@ -69,7 +72,7 @@ distanceMatrix = squareform(pairwiseDistances);
 % Merge the bounding boxes together into paragraph bounding boxes
 for i = 1:size(distanceMatrix,1)
     for j = (i+1):size(distanceMatrix,1)
-        if distanceMatrix(i,j) < 1.5 * (averageBoxWidth + averageBoxHeight)
+        if distanceMatrix(i,j) < averageBoxWidth + averageBoxHeight
             % merge boxes i and j
             parentOfBoxI = i;
             parentOfBoxJ = j;
@@ -90,20 +93,33 @@ for i = 1:size(distanceMatrix,1)
             % to form a new bounding box
             if parentOfBoxI ~= parentOfBoxJ
                 newBox = mergeBoxes(filteredBoundingBoxes(parentOfBoxI,:), filteredBoundingBoxes(parentOfBoxJ,:));
-                filteredBoundingBoxes = [filteredBoundingBoxes; newBox];
-                filteredBoundingBoxes(parentOfBoxI,5) = size(filteredBoundingBoxes,1);
-                filteredBoundingBoxes(parentOfBoxJ,5) = size(filteredBoundingBoxes,1);
+                currentIndex = size(filteredBoundingBoxes,1) + 1;
+                filteredBoundingBoxes = [filteredBoundingBoxes; [newBox currentIndex]];
+                filteredBoundingBoxes(parentOfBoxI,5) = currentIndex;
+                filteredBoundingBoxes(parentOfBoxJ,5) = currentIndex;
             end
         end 
     end
 end
 
+copyOfFilteredBoundingBoxes = filteredBoundingBoxes;
+
+parentBoxMap = containers.Map('KeyType', 'int32', 'ValueType', 'int32');
+
+for i = 1:numOriginalBoxes
+    parent = i;
+    while filteredBoundingBoxes(parent,5) ~= 0
+        parent = filteredBoundingBoxes(parent,5);
+    end
+    parentBoxMap(i) = parent;
+end
+
 figure(30);
 imshow(bwImg);
 
-filteredBoundingBoxes = filteredBoundingBoxes(filteredBoundingBoxes(:,5) == 0,1:4);
+filteredBoundingBoxes = filteredBoundingBoxes(filteredBoundingBoxes(:,5) == 0,:);
 for i = 1:size(filteredBoundingBoxes,1)
-    rectangle('Position', filteredBoundingBoxes(i,:));
+    rectangle('Position', filteredBoundingBoxes(i,1:4));
 end
 
 % Upsample the image to improve OCR perferformance
@@ -114,15 +130,15 @@ imshow(comicImg);
 
 % Resize the bounding boxes accordingly, and give a little bit of wriggle
 % room.
-filteredBoundingBoxes = filteredBoundingBoxes * 4;
+filteredBoundingBoxes(:,1:4) = filteredBoundingBoxes(:,1:4) * 4;
 filteredBoundingBoxes(:,1:2) = filteredBoundingBoxes(:,1:2) - 5;
 filteredBoundingBoxes(:,3:4) = filteredBoundingBoxes(:,3:4) + 10;
 for i = 1:size(filteredBoundingBoxes,1)
-    rectangle('Position', filteredBoundingBoxes(i,:));
+    rectangle('Position', filteredBoundingBoxes(i,1:4));
 end
 
 % Perform the OCR
-txt = ocr(comicImg, filteredBoundingBoxes);
+txt = ocr(comicImg, filteredBoundingBoxes(:,1:4));
 
 % Use the results of the OCR to discard boxes which don't contain text.
 textBoundingBoxes = [];
@@ -134,12 +150,30 @@ end
 
 figure(32);
 imshow(comicImg);
+mergedBoundingBoxExists = containers.Map('KeyType', 'int32', 'ValueType', 'int32');
 for i = 1:size(textBoundingBoxes,1)
-    rectangle('Position', textBoundingBoxes(i,:));
+    rectangle('Position', textBoundingBoxes(i,1:4));
+    mergedBoundingBoxExists(textBoundingBoxes(i,6)) = 1;
 end
 
+
+letterBoundingBoxes = []
+
+figure(33);
+imshow(comicImg);
+for i = 1:numOriginalBoxes
+    hold on;
+    if mergedBoundingBoxExists.isKey(parentBoxMap(i))
+        letterBoundingBoxes = [letterBoundingBoxes; copyOfFilteredBoundingBoxes(i,:)];
+        rectangle('Position', copyOfFilteredBoundingBoxes(i,1:4)*4);
+        plot(copyOfFilteredBoundingBoxes(i,1)*4, copyOfFilteredBoundingBoxes(i,2)*4, 'r+');
+    end
+end
+
+size(letterBoundingBoxes)
+
 % Reperform the OCR
-txt = ocr(comicImg, textBoundingBoxes);
+txt = ocr(comicImg, textBoundingBoxes(:,1:4));
 txt.Text
 
 %comicImg(filteredBoundingBoxes(:,1):(filteredBoundingBoxes(:,1)+filteredBoundingBoxes(:,3)), filteredBoundingBoxes(:,2):(filteredBoundingBoxes(:,2)+filteredBoundingBoxes(:,4))) = 1;
