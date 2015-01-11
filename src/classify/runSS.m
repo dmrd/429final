@@ -2,7 +2,7 @@ function boxes = runSS(im)
 %%
 % Run selective search on the given image.  Return back boxes larger than
 % some min size.
-addpath(genpath('./lib/SelectiveSearchCodeIJCV/'));
+addpath(genpath('../lib/SelectiveSearchCodeIJCV/'));
 MIN_DIMENSION = 20;
 % Parameters. Note that this controls the number of hierarchical
 % segmentations which are combined.
