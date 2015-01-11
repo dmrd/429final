@@ -16,7 +16,7 @@ for imId = 1:n
     %%
     % Hacky XML printing
     [path, imageName, extension] = fileparts(images{imId});
-    fid = fopen(fullfile(outDir, [imageName '.xml']), 'w');
+    fid = fopen(fullfile(outDir, [sprintf('1%.5d', imId) '.xml']), 'w');
     fprintf(fid, '<annotation>\n');
     printField(fid, 'folder', 'VOC2012');
     printField(fid, 'filename', [imageName extension]);
@@ -26,6 +26,12 @@ for imId = 1:n
     printField(fid, 'height', int2str(size(im, 1)));
     printField(fid, 'depth', int2str(size(im, 3)));
     fprintf(fid, '</size>\n');
+    fprintf(fid, ['<source>' ...
+		'<database>The VOC2012 Database</database>' ...
+		'<annotation>PASCAL VOC2012</annotation>' ...
+		'<image>flickr</image>' ...
+	'</source>\n']);
+    fprintf(fid, '<segmented>0</segmented>\n');
     boxCellId = 1;
     for label = 1:length(varargin)
         match = arrayfun(@(x)all(strcmp(x.imageFilename, images(imId))),varargin{label});
@@ -45,6 +51,7 @@ for imId = 1:n
         end
     end
     fprintf(fid, '</annotation>\n');
+    fclose(fid);
 end
 
 

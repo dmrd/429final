@@ -1,16 +1,13 @@
 clear
 
 %[comicImg, map] = imread('dilbert/2014-12-23.gif', 'gif');
-[comicImg, map] = imread('garfield/27-1-1983.gif', 'gif');
-%[comicImg, map] = imread('garfield/garfieldminusgarfield.jpg', 'jpg');
+%[comicImg, map] = imread('garfield/27-1-1983.gif', 'gif');
+comicImg = imread('phdcomic.jpg');
 
 figure(10);
-imshow(comicImg, map);
+imshow(comicImg);
 
-comicImg = rgb2gray(ind2rgb(comicImg, map));
-
-filteredImg = medfilt2(comicImg,[3 3]);
-figure(11), imshow(filteredImg)
+comicImg = rgb2gray(comicImg);
 
 % Binarise image
 
