@@ -1,23 +1,20 @@
 clear
 
 %[comicImg, map] = imread('dilbert/2014-12-23.gif', 'gif');
-[comicImg, map] = imread('garfield/27-1-1983.gif', 'gif');
+%[comicImg, map] = imread('garfield/27-1-1983.gif', 'gif');
+comicImg = imread('bubble_testing_images/phd1.jpg');
+grayImg = rgb2gray(comicImg);
+
+imgWidth = size(grayImg,2); imgHeight = size(grayImg,
+
 %[comicImg, map] = imread('garfield/garfieldminusgarfield.jpg', 'jpg');
 
 figure(10);
-imshow(comicImg, map);
-
-comicImg = rgb2gray(ind2rgb(comicImg, map));
-
-filteredImg = medfilt2(comicImg,[3 3]);
-figure(11), imshow(filteredImg)
+imshow(comicImg);
 
 % Binarise image
 
 bwImg = im2bw(comicImg, 0.3);
-
-figure(23);
-imshow(bwImg);
 
 % Create bounding boxes for the black components
 
@@ -33,16 +30,17 @@ for i = 1:size(CC.PixelIdxList, 2)
 end
 
 % Display the bounding boxes
-for j = 1:size(boundingBoxes, 1)
-    rectangle('Position', boundingBoxes(j,:));
-end
+%for j = 1:size(boundingBoxes, 1)
+%    rectangle('Position', boundingBoxes(j,:));
+%end
 
-figure(24);
-imshow(bwImg);
+
 
 % Filter bounding boxes which are too big or too small
 filteredBoundingBoxes = []; % [x, y]
 boundingBoxCentres = [];
+
+figure(17); imshow(bwImg);
 hold on;
 for j = 1:size(boundingBoxes, 1)
     area = boundingBoxes(j, 3) * boundingBoxes(j, 4);
@@ -114,8 +112,8 @@ for i = 1:numOriginalBoxes
     parentBoxMap(i) = parent;
 end
 
-figure(30);
-imshow(bwImg);
+figure(56);
+imshow(bwImg); hold on;
 
 filteredBoundingBoxes = filteredBoundingBoxes(filteredBoundingBoxes(:,5) == 0,:);
 for i = 1:size(filteredBoundingBoxes,1)
@@ -123,10 +121,10 @@ for i = 1:size(filteredBoundingBoxes,1)
 end
 
 % Upsample the image to improve OCR perferformance
-comicImg = imresize(comicImg, 4, 'lanczos3');
+grayImg = imresize(grayImg, 4, 'lanczos3');
 
-figure(31);
-imshow(comicImg);
+% figure;
+% imshow(grayImg);
 
 % Resize the bounding boxes accordingly, and give a little bit of wriggle
 % room.
@@ -138,7 +136,7 @@ for i = 1:size(filteredBoundingBoxes,1)
 end
 
 % Perform the OCR
-txt = ocr(comicImg, filteredBoundingBoxes(:,1:4));
+txt = ocr(grayImg, filteredBoundingBoxes(:,1:4));
 
 % Use the results of the OCR to discard boxes which don't contain text.
 textBoundingBoxes = [];
@@ -157,14 +155,14 @@ for i = 1:size(textBoundingBoxes,1)
 end
 
 
-letterBoundingBoxes = []
+letterBoundingBoxes = [];
 
 figure(33);
 imshow(comicImg);
 for i = 1:numOriginalBoxes
     hold on;
     if mergedBoundingBoxExists.isKey(parentBoxMap(i))
-        letterBoundingBoxes = [letterBoundingBoxes; copyOfFilteredBoundingBoxes(i,:)];
+        letterBoundingBoxes = [letterBoundingBoxes; copyOfFilteredBoundingBoxes(i,1:4)];
         rectangle('Position', copyOfFilteredBoundingBoxes(i,1:4)*4);
         plot(copyOfFilteredBoundingBoxes(i,1)*4, copyOfFilteredBoundingBoxes(i,2)*4, 'r+');
     end
@@ -173,62 +171,153 @@ end
 size(letterBoundingBoxes)
 
 % Reperform the OCR
-txt = ocr(comicImg, textBoundingBoxes(:,1:4));
+txt = ocr(grayImg, textBoundingBoxes(:,1:4));
 txt.Text
 
-%comicImg(filteredBoundingBoxes(:,1):(filteredBoundingBoxes(:,1)+filteredBoundingBoxes(:,3)), filteredBoundingBoxes(:,2):(filteredBoundingBoxes(:,2)+filteredBoundingBoxes(:,4))) = 1;
+textBoundingBoxes = textBoundingBoxes(:,1:4);
 
+pause;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %{
+% Clear all the letters from the image
+for i = 1:size(letterBoundingBoxes,1)
+    bb = letterBoundingBoxes(i,:);
+    x0 = bb(1); x1 = x0 + bb(3); y0 = bb(2); y1 = y0 + bb(4);
+    bwImg(y0:y1,x0:x1) = 1;
+end
 
-% Detect and extract region
-mserRegions = detectMSERFeatures(comicImg, 'RegionAreaRange', [15, 500], 'ThresholdDelta', 0.5, 'MaxAreaVariation', 1);
-mserRegionsPixels = cell2mat(mserRegions.PixelList);
+cc = bwlabel(bwImg,4);
 
-hold on;
-plot(mserRegions, 'showPixelList', true);%, 'showEllipses', false);
-title('MSER regions');
-
-
-% Convert MSER pixel lists to a binary mask
-mserMask = false(size(comicImg));
-ind = sub2ind(size(mserMask), mserRegionsPixels(:,2), mserRegionsPixels(:,1));
-mserMask(ind) = true;
-
-% Run the edge detector
-edgeMask = edge(comicImg, 'Canny');
-
-% Find intersection between edges and MSER regions
-edgeAndMSERIntersection = edgeMask & mserMask;
-figure;
-imshowpair(edgeMask, edgeAndMSERIntersection, 'montage');
-title('Canny edges and intersection of canny edges with MSER regions');
-
-[~, gDir] = imgradient(comicImg);
-% You must specify if the text is light on dark background or vice versa
-gradientGrownEdgesMask = helperGrowEdges(edgeAndMSERIntersection, gDir, 'DarkTextOnLight');
-figure;
-imshow(gradientGrownEdgesMask);
-title('Edges grown along gradient direction');
-
-% Remove gradient grown edge pixels
-edgeEnhancedMSERMask = ~gradientGrownEdgesMask & mserMask;
-
-% Visualize the effect of segmentation
-figure; imshowpair(mserMask, edgeEnhancedMSERMask, 'montage');
-title('Original MSER regions and segmented MSER regions')
-
-se1=strel('disk',25);
-se2=strel('disk',7);
-
-afterMorphologyMask = imclose(edgeEnhancedMSERMask,se1);
-afterMorphologyMask = imopen(afterMorphologyMask,se2);
-
-% Display image region corresponding to afterMorphologyMask
-displayImage = comicImg;
-size(displayImage)
-displayImage(~repmat(afterMorphologyMask,1,1,3)) = 0;
-size(displayImage)
-figure; imshow(displayImage, map); title('Image region under mask created by joining individual characters')
-
+numBubbles = size(textBoundingBoxes, 1);
+txtVec = zeros(numBubbles, 4);
+for i = 1:numBubbles
+    bubbleLabel = cc(yCenter,xCenter);
+    bubbleIdx = find(cc == bubbleLabel);
+    bubble = false(size(bwImg));
+    bubble(bubbleIdx) = 1;
+    boundaries = bwboundaries(bubble);
+    boundary = boundaries{1};
+    boundary = [boundary(:,2) boundary(:,1)];
+    
+    bubbleCenter = mean(boundary);
+    
+    if numel(bubbleIdx) > 0.2 * numel(bwImg)
+        bubble_type = 'no_bubble';
+    else
+        
+        % Check if the bubble is a thought bubble
+        [centers, radii, metric] = imfindcircles(bubble,[5,20]);
+        %imshow(bubble), hold on;
+        %viscircles(centers, radii,'EdgeColor','b');
+        %pause;
+        if size(centers,1) > 10
+            bubble_type = 'thought';
+            bwImgCopy = bwImg;
+            bwImgCopy(bubble) = 0;
+            [centers, radii, metric] = imfindcircles(bwImgCopy,[5,20]);
+            
+            for i = 1:size(centers,1)
+                centers(i,1) = fix(centers(i,1));
+                centers(i,2) = fix(centers(i,2));
+            end
+            
+            %imshow(bwImgCopy);
+            %hold on;
+            %plot(centers(:,1), centers(:,2), 'r*');
+            %viscircles(centers, radii,'EdgeColor','b');
+            
+            pathCenters = [];
+            lastCenter = bubbleCenter;
+            while size(centers,1) > 0
+                distances = zeros(size(centers,1),1);
+                for i = 1:length(distances)
+                    distances(i) = dist(lastCenter,centers(i,:));
+                end
+                [d,idx] = min(distances);
+                if grayImg(fix(centers(idx,2)),fix(centers(idx,1))) < 235
+                    centers(idx, :) = [];
+                    continue;
+                end
+                d
+                if d > 100
+                    break;
+                end
+                
+                pathCenters = [pathCenters; centers(idx,:)];
+                lastCenter = centers(idx,:);
+                centers(idx,:) = [];
+            end
+            
+            imshow(bwImg);
+            hold on;
+            plot(pathCenters(:,1), pathCenters(:,2), 'r*');
+            
+            nCenters = size(pathCenters,1);
+            last = pathCenters(nCenters,:); sndLast = pathCenters(nCenters,:);
+            diff = last - sndLast;
+            vec = diff / norm(diff);
+            
+        else
+            bubble_type = 'standard';
+            
+            C = corner(bubble,'SensitivityFactor',0.01);
+            C = sortrows(C,2);
+            C = C(length(C),:);
+            
+            bubbleBoundary = false(size(bwImg));
+            
+            figure;
+            imshow(bubbleBoundary);
+            hold on
+            
+            plot(boundary(:,1), boundary(:,2), 'w', 'LineWidth', 2);
+            
+            distances = zeros(length(boundary),1);
+            for i = 1:length(boundary)
+                distances(i) = dist(C,boundary(i,:));
+            end
+            [~, closestIdx] = min(distances);
+            closestPt = boundary(closestIdx,:);
+            
+            left = boundary(closestIdx:closestIdx+10,:);
+            plot(left(:,1), left(:,2), 'w', 'LineWidth', 2);
+            right = boundary(closestIdx:-1:closestIdx-10,:);
+            plot(right(:,1), right(:,2), 'w', 'LineWidth', 2);
+            leftLine = polyfit(left(:,1),left(:,2),1);
+            rightLine = polyfit(right(:,1),right(:,2),1);
+            
+            x = linspace(closestPt(1)-10,closestPt(1)+10);
+            y = polyval([leftLine(1),leftLine(2)], x);
+            plot(x,y,'r','LineWidth',0.1);
+            x = linspace(closestPt(1)-10,closestPt(1)+10);
+            y = polyval([rightLine(1),rightLine(2)], x);
+            plot(x,y,'r','LineWidth',0.1);
+            
+            leftAngle = atan(leftLine(1));
+            rightAngle = atan(rightLine(1));
+            if leftAngle < 0
+                leftAngle = leftAngle + pi;
+            end
+            if rightAngle < 0
+                rightAngle = rightAngle + pi;
+            end
+            
+            avgAngle = (leftAngle + rightAngle)/2;
+            slope = tan(avgAngle);
+            intercept = closestPt(2) - closestPt(1)*slope;
+            x = linspace(closestPt(1)-5,closestPt(1)+5);
+            y = polyval([slope,intercept], x);
+            plot(x,y,'r','LineWidth',0.1);
+        end
+        
+        
+        
+    end
+    
+    %imshow(bwImg);
+end
 %}
+
+
