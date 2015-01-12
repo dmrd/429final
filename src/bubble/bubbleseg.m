@@ -1,4 +1,4 @@
-function [ rects ] = bubbleseg(comicImg)
+function [ rects text ] = bubbleseg(comicImg)
 
 %[comicImg, map] = imread('dilbert/2014-12-23.gif', 'gif');
 %[comicImg, map] = imread('garfield/27-1-1983.gif', 'gif');
@@ -177,7 +177,11 @@ for j = 1:size(textBoundingBoxes, 1)
 end
 
 % Reperform the OCR
-txt = ocr(comicImg, reFilteredBoundingBoxes(:,1:4));
-txt.Text
+ocrText = ocr(comicImg, reFilteredBoundingBoxes(:,1:4));
+
+text = {};
+for i = 1:size(txt, 1)
+    text{i} = ocrText(i).Text;
+end
 
 rects = fix(reFilteredBoundingBoxes(:,1:4) ./ 4);
