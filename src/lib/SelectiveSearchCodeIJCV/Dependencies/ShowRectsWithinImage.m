@@ -1,10 +1,10 @@
-function ShowRectsWithinImage(rects, numRow, numCol, image, imageNames)
+function ShowRectsWithinImage(rects, numRow, numCol, image, cls)
 % ShowRects(Rects, numRow, numCol, image)
 %
 % Shows only the rectangles of the image
 %
 %     Jasper Uijlings - 2013
-
+class(cls)
 if ~exist('imageNames', 'var')
     imageNames = cell(size(rects,1), 1);
     for i=1:size(rects,1)
@@ -21,4 +21,4 @@ for i=1:size(rects,1)
     idx = idx + 1;
 end
 
-ShowImageCell(images, numRow, numCol, 'rects', imageNames);
+ShowImageCell(images, numRow, numCol, cls, imageNames);

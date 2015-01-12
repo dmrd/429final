@@ -22,7 +22,7 @@ for imId = 1:n
         end
     end
     bboxes{imId} = boxes;
-    imageNames{imId} = images(imId);
+    imageNames{imId} = images{imId};
 end
 
 positives = struct('imageFilename', imageNames, 'objectBoundingBoxes', bboxes);
