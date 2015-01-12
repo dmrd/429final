@@ -1,22 +1,26 @@
-function [] = trainAndTest(exemplarPath, dataset, class, labelsPath)
+function [] = trainAndTest(rootPath, dataset, class)
 
 % Usage:
 %       Save output of trainImageLabeler as 'positiveInstances.mat' in labelsDir[class]
 %
-%       exemplarPath = '/Users/frankjiang/Documents/Workspace/429final/exemplarsvm/'
+%       resultsPath = '/Users/frankjiang/Documents/Workspace/429final/exemplarsvm/'
 %       dataset = 'garfield'
 %       class = 'garfield'
 %       labelsPath = '/Users/frankjiang/Documents/Workspace/429final/labels/'
 %       trainAndTest(exemplarDir, dataset, class, labelsPath)
 
-imPath = [exemplarPath 'ComicSVM/' dataset '/JPEGImages/' class '/'];
-annoPath = [exemplarPath 'ComicSVM/' dataset '/Annotations/' class '/'];
-imsetPath = [exemplarPath 'ComicSVM/' dataset '/ImageSets/Main/' class '/'];
+resultsPath = [rootPath 'results/'];
+rmdir(resultsPath, 's');
+imPath = [resultsPath 'ComicSVM/' dataset '/JPEGImages/' class '/'];
+annoPath = [resultsPath 'ComicSVM/' dataset '/Annotations/' class '/'];
+imsetPath = [resultsPath 'ComicSVM/' dataset '/ImageSets/Main/' class '/'];
 mkdir(imPath);
 mkdir(annoPath);
 mkdir(imsetPath);
 
-load([labelsPath class '/positiveInstances.mat']);
+addpath(genpath(rootPath));
+
+load([rootPath 'labels/' class '/positiveInstances.mat']);
 
 numExamples = size(positiveInstances,2);
 neg_set = [];
@@ -47,10 +51,10 @@ neg_set = cellstr(neg_set);
 labelsToVOC(annoPath, {class}, positiveInstances);
 
 load('./dataset_params.mat');
-dataset_params.devkitroot = './results//';
-dataset_params.localdir = './results//';
-dataset_params.resdir = './results///results/';
-dataset_params.datadir = [exemplarPath 'ComicSVM/'];
+dataset_params.devkitroot = [resultsPath '/'];
+dataset_params.localdir = [resultsPath '/'];
+dataset_params.resdir = [resultsPath '//results/'];
+dataset_params.datadir = [resultsPath 'ComicSVM/'];
 dataset_params.dataset = [dataset];
 dataset_params.testset = 'test';
 dataset_params.SKIP_EVAL = 0;
