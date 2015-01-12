@@ -8,8 +8,9 @@ if not(exist(dirname, 'dir'))
     mkdir(dirname);
 end
 for i = 1:size(labelStruct, 2)
-    [im, map] = imread(labelStruct(i).imageFilename);
-    im = ind2rgb(im, map);
+    %[im, map] = imread(labelStruct(i).imageFilename);
+    %im = ind2rgb(im, map);
+    im = imread(labelStruct(i).imageFilename);
     for bId = 1:size(labelStruct(i).objectBoundingBoxes, 1)
         b = labelStruct(i).objectBoundingBoxes(bId, :);
         crop = im(b(2):min(size(im, 1), b(2) + b(4)), b(1):min(size(im, 2), b(1) + b(3)),:);
