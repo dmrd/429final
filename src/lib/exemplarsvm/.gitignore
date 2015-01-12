@@ -1,0 +1,11 @@
+*~
+.DS_Store
+data/
+subber.mat
+
+!*.mexglx
+!*.mexmac
+!*.mexmaci
+!*.mexmaci64
+!*.mexa64
+!*.mex
