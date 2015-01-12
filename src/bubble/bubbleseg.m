@@ -130,6 +130,13 @@ comicImg = imresize(comicImg, 4, 'lanczos3');
 filteredBoundingBoxes(:,1:4) = filteredBoundingBoxes(:,1:4) * 4;
 filteredBoundingBoxes(:,1:2) = filteredBoundingBoxes(:,1:2) - 5;
 filteredBoundingBoxes(:,3:4) = filteredBoundingBoxes(:,3:4) + 10;
+
+% Snap to box
+
+filteredBoundingBoxes(:, 3) = min(filteredBoundingBoxes(:, 3), size(comicImg, 2) - filteredBoundingBoxes(:, 1)); % width
+filteredBoundingBoxes(:, 4) = min(filteredBoundingBoxes(:, 4), size(comicImg, 1) - filteredBoundingBoxes(:, 2)); % height
+filteredBoundingBoxes(:, 1:2) = max(filteredBoundingBoxes(:, 1:2), 1);
+
 for i = 1:size(filteredBoundingBoxes,1)
  %   rectangle('Position', filteredBoundingBoxes(i,1:4));
 end
@@ -177,6 +184,7 @@ for j = 1:size(textBoundingBoxes, 1)
 end
 
 % Reperform the OCR
+comicImg = im2bw(comicImg, 0.8);
 txt = ocr(comicImg, reFilteredBoundingBoxes(:,1:4));
 txt.Text
 
