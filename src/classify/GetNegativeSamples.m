@@ -12,8 +12,9 @@ if nargin == 3
     end
 end
 for imEx = 1:size(positiveInstances, 2)
-    [im, map] = imread(positiveInstances(imEx).imageFilename);
-    im = ind2rgb(im, map);
+    %[im, map] = imread(positiveInstances(imEx).imageFilename);
+    %im = ind2rgb(im, map);
+    im = imread(positiveInstances(imEx).imageFilename);
     disp(positiveInstances(imEx).imageFilename)
     
     %%
@@ -29,7 +30,9 @@ for imEx = 1:size(positiveInstances, 2)
     if nargin == 3
         for i = 1:size(neg, 1)
             crop = im(neg(i, 2):neg(i, 2) + neg(i, 4), neg(i, 1):neg(i, 1) + neg(i, 3),:);
+            
             filename = strcat(int2str(imEx), '_', int2str(i), '.jpg');
+            %imwrite(imresize(crop, 2, 'bicubic'), fullfile(dirname, filename));
             imwrite(crop, fullfile(dirname, filename));
         end
     end
