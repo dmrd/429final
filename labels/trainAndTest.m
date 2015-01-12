@@ -7,7 +7,7 @@ function [] = trainAndTest(exemplarPath, dataset, class, labelsPath)
 %       dataset = 'garfield'
 %       class = 'garfield'
 %       labelsPath = '/Users/frankjiang/Documents/Workspace/429final/labels/'
-%       trainAndTest(exemplarDir, class)
+%       trainAndTest(exemplarDir, dataset, class, labelsPath)
 
 imPath = [exemplarPath 'ComicSVM/' dataset '/JPEGImages/' class '/'];
 annoPath = [exemplarPath 'ComicSVM/' dataset '/Annotations/' class '/'];
