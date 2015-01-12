@@ -18,7 +18,7 @@ lastCenter = startCenter;
 while size(centers,1) > 0
     distances = zeros(size(centers,1),1);
     for i = 1:length(distances)
-        distances(i) = dist(lastCenter,centers(i,:));
+        distances(i) = norm(lastCenter - centers(i,:));
     end
     [d,idx] = min(distances);
     if grayImg(fix(centers(idx,2)),fix(centers(idx,1))) < 235
