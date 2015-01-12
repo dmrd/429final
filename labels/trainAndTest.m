@@ -1,4 +1,4 @@
-function [] = trainAndTest(rootPath, dataset, class)
+function test_set = trainAndTest(rootPath, dataset, class)
 
 % Usage:
 %       Save output of trainImageLabeler as 'positiveInstances.mat' in labelsDir[class]
@@ -11,7 +11,7 @@ function [] = trainAndTest(rootPath, dataset, class)
 
 resultsPath = [rootPath 'results/'];
 if exist(resultsPath) == 7
-    rmdir(resultsPath, 's');
+%    rmdir(resultsPath, 's');
 end;
 
 imPath = [resultsPath 'ComicSVM/' dataset '/JPEGImages/' class '/'];
@@ -53,7 +53,7 @@ neg_set = cellstr(neg_set);
 
 labelsToVOC(annoPath, {class}, positiveInstances);
 
-load('./dataset_params.mat');
+load([rootPath 'labels/dataset_params.mat']);
 dataset_params.devkitroot = [resultsPath '/'];
 dataset_params.localdir = [resultsPath '/'];
 dataset_params.resdir = [resultsPath '//results/'];
