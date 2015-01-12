@@ -152,5 +152,6 @@ if fileexists(final_file)
   end
   %Delete directory too
   [basedir,other,ext] = fileparts(files{1});
+  basedir
   rmdir(basedir);
 end

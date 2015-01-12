@@ -1,34 +1,34 @@
-function test_set = trainAndTest(rootPath, dataset, class)
+function test_set = trainAndTest(rootPath, dataset, character)
 
 % Usage:
-%       Save output of trainImageLabeler as 'positiveInstances.mat' in labelsDir[class]
+%       Save output of trainImageLabeler as 'positiveInstances.mat' in labelsDir[character]
 %
 %       resultsPath = '/Users/frankjiang/Documents/Workspace/429final/exemplarsvm/'
 %       dataset = 'garfield'
-%       class = 'garfield'
+%       character = 'garfield'
 %       labelsPath = '/Users/frankjiang/Documents/Workspace/429final/labels/'
-%       trainAndTest(exemplarDir, dataset, class, labelsPath)
+%       trainAndTest(exemplarDir, dataset, character, labelsPath)
 
-resultsPath = [rootPath 'results/'];
+resultsPath = [rootPath '/results/'];
 if exist(resultsPath) == 7
 %    rmdir(resultsPath, 's');
 end;
 
-imPath = [resultsPath 'ComicSVM/' dataset '/JPEGImages/' class '/'];
-annoPath = [resultsPath 'ComicSVM/' dataset '/Annotations/' class '/'];
-imsetPath = [resultsPath 'ComicSVM/' dataset '/ImageSets/Main/' class '/'];
+imPath = [resultsPath 'ComicSVM/' dataset '/JPEGImages/' character '/'];
+annoPath = [resultsPath 'ComicSVM/' dataset '/Annotations/' character '/'];
+imsetPath = [resultsPath 'ComicSVM/' dataset '/ImageSets/Main/' character '/'];
 mkdir(imPath);
 mkdir(annoPath);
 mkdir(imsetPath);
 
 addpath(genpath(rootPath));
 
-load([rootPath 'labels/' class '/positiveInstances.mat']);
+load([rootPath '/labels/' character '/positiveInstances.mat']);
 
 numExamples = size(positiveInstances,2);
 neg_set = [];
-fidTrainval = fopen([imsetPath class '_trainval.txt'], 'w');
-fidTest = fopen([imsetPath class '_test.txt'], 'w');
+fidTrainval = fopen([imsetPath character '_trainval.txt'], 'w');
+fidTest = fopen([imsetPath character '_test.txt'], 'w');
 for i = 1:numExamples
     im = imread(positiveInstances(i).imageFilename);
     posName = [imPath sprintf('1%.5d.jpg', i)];
@@ -51,9 +51,9 @@ fclose(fidTest);
 
 neg_set = cellstr(neg_set);
 
-labelsToVOC(annoPath, {class}, positiveInstances);
+labelsToVOC(annoPath, {character}, positiveInstances);
 
-load([rootPath 'labels/dataset_params.mat']);
+load([rootPath '/labels/dataset_params.mat']);
 dataset_params.devkitroot = [resultsPath '/'];
 dataset_params.localdir = [resultsPath '/'];
 dataset_params.resdir = [resultsPath '//results/'];
@@ -66,17 +66,14 @@ dataset_params.annopath = [annoPath '%s.xml'];
 dataset_params.imgpath = [imPath '%s.jpg'];
 dataset_params.imgsetpath = [imsetPath '%s.txt'];
 dataset_params.clsimgsetpath = [imsetPath '%s_%s.txt'];
-dataset_params.clsrespath = './results///results/Main/%s_cls_test_%s.txt';
-dataset_params.detrespath = './results///results/Main/%s_det_test_%s.txt';
-%{
-dataset_params.
-dataset_params.
-dataset_params.
-dataset_params.
-dataset_params.
-dataset_params.
-dataset_params.
-%}
+dataset_params.clsrespath = [rootPath '/results///results/Main/%s_cls_test_%s.txt'];
+dataset_params.detrespath = [rootPath '/results///results/Main/%s_det_test_%s.txt'];
+dataset_params.nparts = 3;
+dataset_params.maxparts = [1 2 2];
+dataset_params.nactions = 9;
+dataset_params.minoverlap = 0.5000;
+dataset_params.annocachepath = [rootPath '/results//%s_anno.mat'];
+dataset_params.exfdpath = [rootPath '/results//%s_fed.mat'];
 
 params = esvm_get_default_params;
 params.model_type = 'exemplar';
@@ -88,7 +85,7 @@ stream_params.stream_max_ex = 1;
 stream_params.must_have_seg = 0;
 stream_params.must_have_seg_string = '';
 stream_params.model_type = 'exemplar'; %must be scene or exemplar;
-stream_params.cls = class;
+stream_params.cls = character;
 
 %Create an exemplar stream (list of exemplars)
 e_stream_set = esvm_get_pascal_stream(stream_params, ...
@@ -97,7 +94,7 @@ e_stream_set = esvm_get_pascal_stream(stream_params, ...
                
                                   
 models_name = ...
-    [class '-' params.init_params.init_type ...
+    [character '-' params.init_params.init_type ...
      '.' params.model_type];
 
 initial_models = esvm_initialize_exemplars(e_stream_set, params, models_name);
@@ -118,16 +115,18 @@ val_params = params;
 val_params.detect_exemplar_nms_os_threshold = 0.5;
 val_params.gt_function = @esvm_load_gt_function;
 
-val_set_name = ['trainval+' class];
+val_set_name = ['trainval+' character];
 
 val_set = esvm_get_pascal_set(dataset_params, val_set_name);
 val_set = val_set(1:40);
                               
 val_grid = esvm_detect_imageset(val_set, models, val_params, val_set_name);
 
+pause
 M = esvm_perform_calibration(val_grid, val_set, models, ...
                              val_params);
-                         
+
+pause
                          
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Testing
@@ -135,7 +134,7 @@ M = esvm_perform_calibration(val_grid, val_set, models, ...
 
 test_params = params;
 test_params.detect_exemplar_nms_os_threshold = 0.5;
-test_set_name = ['test+' class];
+test_set_name = ['test+' character];
 test_set = esvm_get_pascal_set(dataset_params, test_set_name);
 %test_set = test_set(1:100);
 
