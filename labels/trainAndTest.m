@@ -1,42 +1,75 @@
-function [] = trainAndTest(exemplarDir, class)
+function [] = trainAndTest(exemplarPath, dataset, class, labelsPath)
 
 % Usage:
-%       Place output of trainImageLabeler in ./[class]
+%       Save output of trainImageLabeler as 'positiveInstances.mat' in labelsDir[class]
 %
-%       exemplarDir = '/Users/frankjiang/Documents/Workspace/429final/exemplarsvm/'
+%       exemplarPath = '/Users/frankjiang/Documents/Workspace/429final/exemplarsvm/'
+%       dataset = 'garfield'
 %       class = 'garfield'
+%       labelsPath = '/Users/frankjiang/Documents/Workspace/429final/labels/'
 %       trainAndTest(exemplarDir, class)
 
-imPath = [exemplarDir 'VOCdevkit/VOC2007/JPEGImages/' class];
-annoPath = [exemplarDir 'VOCdevkit/VOC2007/Annotations/' class];
+imPath = [exemplarPath 'ComicSVM/' dataset '/JPEGImages/' class '/'];
+annoPath = [exemplarPath 'ComicSVM/' dataset '/Annotations/' class '/'];
+imsetPath = [exemplarPath 'ComicSVM/' dataset '/ImageSets/Main/' class '/'];
 mkdir(imPath);
 mkdir(annoPath);
+mkdir(imsetPath);
 
-load('./' class '/positiveInstances.mat');
+load([labelsPath class '/positiveInstances.mat']);
 
 numExamples = size(positiveInstances,2);
 neg_set = [];
+fidTrainval = fopen([imsetPath class '_trainval.txt'], 'w');
+fidTest = fopen([imsetPath class '_test.txt'], 'w');
 for i = 1:numExamples
     im = imread(positiveInstances(i).imageFilename);
     posName = [imPath sprintf('1%.5d.jpg', i)];
     imwrite(im, posName, 'JPEG');
+    fprintf(fidTrainval, [sprintf('1%.5d', i) ' 1\n']);
+    fprintf(fidTest, [sprintf('1%.5d', i) ' 1\n']);
     
     for j = 1:size(positiveInstances(i).objectBoundingBoxes,1)
         bb = positiveInstances(i).objectBoundingBoxes(j,:);
         im(bb(2):bb(2)+bb(4),bb(1):bb(1)+bb(3),:) = 255;
     end
-    negName = [imPath sprintf('%.6d.jpg', i)];
+    negName = [imPath sprintf('%.6d.jpg', i);];
     imwrite(im, negName, 'JPEG');
     neg_set = [neg_set; negName];
+    fprintf(fidTrainval, [sprintf('%.6d', i) ' -1\n']);
+    fprintf(fidTest, [sprintf('%.6d', i) ' -1\n']);
 end
+fclose(fidTrainval);
+fclose(fidTest);
 
 neg_set = cellstr(neg_set);
 
-labelsToVOC(annoPath, {class}, positiveInstances)
+labelsToVOC(annoPath, {class}, positiveInstances);
 
 load('./dataset_params.mat');
-dataset_params.imgpath = [imPath '%s.jpg'];
+dataset_params.devkitroot = './results//';
+dataset_params.localdir = './results//';
+dataset_params.resdir = './results///results/';
+dataset_params.datadir = [exemplarPath 'ComicSVM/'];
+dataset_params.dataset = [dataset];
+dataset_params.testset = 'test';
+dataset_params.SKIP_EVAL = 0;
+dataset_params.display = 0;
 dataset_params.annopath = [annoPath '%s.xml'];
+dataset_params.imgpath = [imPath '%s.jpg'];
+dataset_params.imgsetpath = [imsetPath '%s.txt'];
+dataset_params.clsimgsetpath = [imsetPath '%s_%s.txt'];
+dataset_params.clsrespath = './results///results/Main/%s_cls_test_%s.txt';
+dataset_params.detrespath = './results///results/Main/%s_det_test_%s.txt';
+%{
+dataset_params.
+dataset_params.
+dataset_params.
+dataset_params.
+dataset_params.
+dataset_params.
+dataset_params.
+%}
 
 params = esvm_get_default_params;
 params.model_type = 'exemplar';

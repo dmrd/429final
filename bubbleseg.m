@@ -33,10 +33,11 @@ end
 for j = 1:size(boundingBoxes, 1)
     rectangle('Position', boundingBoxes(j,:));
 end
-
+imshow(bwImg)
+pause
 figure(24);
 imshow(bwImg);
-
+pause
 % Filter bounding boxes which are too big or too small
 filteredBoundingBoxes = []; % [x, y]
 boundingBoxCentres = [];
@@ -55,6 +56,13 @@ plot(boundingBoxCentres(:,1), boundingBoxCentres(:,2), 'r+');
 
 averageBoxWidth = sum(filteredBoundingBoxes(:,3)) / size(filteredBoundingBoxes,1);
 averageBoxHeight = sum(filteredBoundingBoxes(:,4)) / size(filteredBoundingBoxes,1);
+
+% Try ransac line fitting
+XYZ = double([boundingBoxCentres zeros(size(boundingBoxCentres,1),1)]);
+[L, inliers] = ransacfitline(XYZ', averageBoxHeight, 1);
+L = L(1:2,:)';
+plot(L(:,1), L(:,2), 'go');
+pause;
 
 % The 5th column is merged box which each box is a part of. Zero indicates it has not
 % been merged.
@@ -154,7 +162,7 @@ for i = 1:size(textBoundingBoxes,1)
 end
 
 
-letterBoundingBoxes = []
+letterBoundingBoxes = [];
 
 figure(33);
 imshow(comicImg);
@@ -173,19 +181,20 @@ size(letterBoundingBoxes)
 txt = ocr(comicImg, textBoundingBoxes(:,1:4));
 txt.Text
 
-%comicImg(filteredBoundingBoxes(:,1):(filteredBoundingBoxes(:,1)+filteredBoundingBoxes(:,3)), filteredBoundingBoxes(:,2):(filteredBoundingBoxes(:,2)+filteredBoundingBoxes(:,4))) = 1;
 
 
 %{
+comicImg = imresize(comicImg, 4, 'lanczos3');
+figure(100)
+imshow(comicImg)
 
 % Detect and extract region
-mserRegions = detectMSERFeatures(comicImg, 'RegionAreaRange', [15, 500], 'ThresholdDelta', 0.5, 'MaxAreaVariation', 1);
+mserRegions = detectMSERFeatures(comicImg, 'RegionAreaRange', [15, 500], 'ThresholdDelta', 3, 'MaxAreaVariation', 0.1);
 mserRegionsPixels = cell2mat(mserRegions.PixelList);
 
 hold on;
-plot(mserRegions, 'showPixelList', true);%, 'showEllipses', false);
+plot(mserRegions, 'showPixelList', true, 'showEllipses', false);
 title('MSER regions');
-
 
 % Convert MSER pixel lists to a binary mask
 mserMask = false(size(comicImg));
