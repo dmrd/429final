@@ -10,7 +10,10 @@ function [] = trainAndTest(rootPath, dataset, class)
 %       trainAndTest(exemplarDir, dataset, class, labelsPath)
 
 resultsPath = [rootPath 'results/'];
-rmdir(resultsPath, 's');
+if exist(resultsPath) == 7
+    rmdir(resultsPath, 's');
+end;
+
 imPath = [resultsPath 'ComicSVM/' dataset '/JPEGImages/' class '/'];
 annoPath = [resultsPath 'ComicSVM/' dataset '/Annotations/' class '/'];
 imsetPath = [resultsPath 'ComicSVM/' dataset '/ImageSets/Main/' class '/'];
