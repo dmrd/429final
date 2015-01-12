@@ -61,7 +61,7 @@ moses = cat(1,final_maxos{:});
 
 %% sort detections by score
 try
-  [aa,bb] = sort(bbs(:,end), 'descend');
+  [aa,bb] = sort(bbs(:,end), 'ascend');
 catch
   aa = [];
   bb = [];
@@ -134,15 +134,6 @@ for k = 1:maxk
     %curid = grid{imids(curb)}.curid;
 
     I = (convert_to_I(test_set{bbs(bb(counter),11)}));
-    figure(666);
-    imshow(I);
-    hold on;
-    xMin = bbs(bb(counter),1)
-    yMin = bbs(bb(counter),2)
-    width = bbs(bb(counter),3) - bbs(bb(counter),1)
-    height = bbs(bb(counter),4) - bbs(bb(counter),2)
-    rectangle('Position', [xMin, yMin, width, height]);
-    pause
     
     TARGET_BUS = -1;
 
