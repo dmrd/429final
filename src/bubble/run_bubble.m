@@ -1,9 +1,8 @@
-function [ pts, thetas ] = run_bubble( comicImg )
+function [ pts, thetas, text ] = run_bubble( comicImg )
 
-rects = bubbleseg(comicImg);
-
-%pts = 0; thetas = 0;
-[pts, thetas] =  bubble_direction(comicImg, rects);
+[rects, text] = bubbleseg(comicImg);
+[pts, thetas, idxs] =  bubble_direction(comicImg, rects);
+text = text{idxs};
 
 end
 
