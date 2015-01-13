@@ -16,29 +16,29 @@ mkdir(imsetPath);
 
 addpath(genpath(rootPath));
 
-load([rootPath '/labels/' character '/positiveInstances.mat']);
+load([rootPath '/labels/' dataset '/' character 'PositiveInstances.mat']);
 
 numExamples = size(positiveInstances,2);
 neg_set = [];
 fidTrainval = fopen([imsetPath character '_trainval.txt'], 'w');
 fidTest = fopen([imsetPath character '_test.txt'], 'w');
 for i = 1:numExamples
-    positiveInstances(i).imageFilename
-    im = imread(positiveInstances(i).imageFilename);
-    posName = [imPath sprintf('1%.5d.jpg', i)];
+    fileName = positiveInstances(i).imageFilename;
+    im = imread(fileName);
+    posName = [imPath fileName];
     imwrite(im, posName, 'JPEG');
-    fprintf(fidTrainval, [sprintf('1%.5d', i) ' 1\n']);
-    fprintf(fidTest, [sprintf('1%.5d', i) ' 1\n']);
+    fprintf(fidTrainval, [fileName(1:end-4) ' 1\n']);
+    fprintf(fidTest, [fileName(1:end-4) ' 1\n']);
     
     for j = 1:size(positiveInstances(i).objectBoundingBoxes,1)
         bb = positiveInstances(i).objectBoundingBoxes(j,:);
         im(bb(2):bb(2)+bb(4),bb(1):bb(1)+bb(3),:) = 255;
     end
-    negName = [imPath sprintf('%.6d.jpg', i);];
+    negName = [imPath 'Neg-' fileName];
     imwrite(im, negName, 'JPEG');
     neg_set = [neg_set; negName];
-    fprintf(fidTrainval, [sprintf('%.6d', i) ' -1\n']);
-    fprintf(fidTest, [sprintf('%.6d', i) ' -1\n']);
+    fprintf(fidTrainval, ['Neg-' fileName(1:end-4) ' -1\n']);
+    fprintf(fidTest, ['Neg-' fileName(1:end-4) ' -1\n']);
 end
 fclose(fidTrainval);
 fclose(fidTest);
@@ -76,7 +76,7 @@ params.dataset_params = dataset_params;
 
 %Initialize exemplar stream
 stream_params.stream_set_name = 'trainval';
-stream_params.stream_max_ex = 1;
+stream_params.stream_max_ex = 10;
 stream_params.must_have_seg = 0;
 stream_params.must_have_seg_string = '';
 stream_params.model_type = 'exemplar'; %must be scene or exemplar;
@@ -114,7 +114,10 @@ val_params.gt_function = @esvm_load_gt_function;
 val_set_name = ['trainval+' character];
 
 val_set = esvm_get_pascal_set(dataset_params, val_set_name);
-val_set = val_set(1:40);
+
+if size(val_set, 1) > 40
+    val_set = val_set(1:40);
+end
                               
 val_grid = esvm_detect_imageset(val_set, models, val_params, val_set_name);
 
