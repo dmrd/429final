@@ -9,7 +9,7 @@ function [ d ] = distance_vector_to_rect( pt, theta, rect )
                       xmax, (a * xmax + b) ; ...
                       (ymin - b)/a, ymin ; ...
                       (ymax - b)/a, ymax
-                    ]
+                    ];
      distances = [];            
      for i = 1:4
          int = intersections(i,:);
