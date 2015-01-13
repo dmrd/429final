@@ -17,14 +17,13 @@ mkdir(imsetPath);
 addpath(genpath(rootPath));
 
 load([rootPath '/labels/' dataset '/' character 'PositiveInstances.mat']);
-positiveInstances(5).imageFilename
 
 numExamples = size(positiveInstances,2);
 neg_set = [];
 fidTrainval = fopen([imsetPath character '_trainval.txt'], 'w');
 fidTest = fopen([imsetPath character '_test.txt'], 'w');
 for i = 1:numExamples
-    i
+    
     fileName = positiveInstances(i).imageFilename;
     im = imread(fileName);
     posName = [imPath fileName];
