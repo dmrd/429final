@@ -23,7 +23,7 @@ neg_set = [];
 fidTrainval = fopen([imsetPath character '_trainval.txt'], 'w');
 fidTest = fopen([imsetPath character '_test.txt'], 'w');
 for i = 1:numExamples
-    fileName = positiveInstances(i).imageFilename;
+    fileName = positiveInstances(i).imageFilename
     im = imread(fileName);
     posName = [imPath fileName];
     imwrite(im, posName, 'JPEG');
