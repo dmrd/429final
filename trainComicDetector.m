@@ -47,7 +47,28 @@ neg_set = cellstr(neg_set);
 
 labelsToVOC(annoPath, {character}, positiveInstances);
 
-load([rootPath '/dataset_params.mat']);
+dataset_params.devkitroot = [resultsPath '/'];
+dataset_params.localdir = [resultsPath '/'];
+dataset_params.resdir = [resultsPath '//results/'];
+dataset_params.datadir = [resultsPath 'ComicSVM/'];
+dataset_params.dataset = [dataset];
+dataset_params.testset = 'test';
+dataset_params.SKIP_EVAL = 0;
+dataset_params.display = 0;
+dataset_params.annopath = [annoPath '%s.xml'];
+dataset_params.imgpath = [imPath '%s.jpg'];
+dataset_params.imgsetpath = [imsetPath '%s.txt'];
+dataset_params.clsimgsetpath = [imsetPath '%s_%s.txt'];
+dataset_params.clsrespath = [rootPath '/results///results/Main/%s_cls_test_%s.txt'];
+dataset_params.detrespath = [rootPath '/results///results/Main/%s_det_test_%s.txt'];
+dataset_params.nparts = 3;
+dataset_params.maxparts = [1 2 2];
+dataset_params.nactions = 9;
+dataset_params.minoverlap = 0.5000;
+dataset_params.annocachepath = [rootPath '/results//%s_anno.mat'];
+dataset_params.exfdpath = [rootPath '/results//%s_fed.mat'];
+
+save([rootPath '/dataset_params.mat'], 'dataset_params');
 
 params = esvm_get_default_params;
 params.model_type = 'exemplar';
