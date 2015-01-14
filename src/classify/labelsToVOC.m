@@ -16,7 +16,7 @@ for imId = 1:n
     %%
     % Hacky XML printing
     [path, imageName, extension] = fileparts(images{imId});
-    fid = fopen(fullfile(outDir, [sprintf('1%.5d', imId) '.xml']), 'w');
+    fid = fopen(fullfile(outDir, [imNames{imId}(1:end-4) '.xml']), 'w');
     fprintf(fid, '<annotation>\n');
     printField(fid, 'folder', 'VOC2012');
     printField(fid, 'filename', [imageName extension]);

@@ -61,7 +61,7 @@ moses = cat(1,final_maxos{:});
 
 %% sort detections by score
 try
-  [aa,bb] = sort(bbs(:,end), 'ascend');
+  [aa,bb] = sort(bbs(:,end), 'descend');
 catch
   aa = [];
   bb = [];

@@ -1,9 +1,9 @@
-function [ pts thetas ] = bubble_direction(comicImg, rects)
-%filename = 'bubble_testing_images/phd1.jpg';
-%comicImg = imread(filename);
+function [ pts thetas idxs ] = bubble_direction(comicImg, rects)
 
-comicImg = imresize(comicImg,2,'bicubic');
-rects = rects * 2
+scalingFactor = 2;
+
+comicImg = imresize(comicImg,scalingFactor,'bicubic');
+rects = rects * scalingFactor;
 
 grayImg = rgb2gray(comicImg);
 bwImg = im2bw(comicImg, 0.8);
@@ -17,6 +17,7 @@ end
 
 pts = [];
 thetas = [];
+idxs = [];
 for i = 1:size(rects,1)
     rect = rects(i,:);
     x0 = rect(1); x1 = x0 + rect(3);
@@ -48,6 +49,7 @@ for i = 1:size(rects,1)
                 [pt, theta] = thought_bubble(bwImgCopy, bubble, grayImg, bubbleCenter);
                 pts = [pts; pt];
                 thetas = [thetas; theta];
+                idxs = [idxs ; i];
             catch e
                 display(e);
             end
@@ -57,6 +59,7 @@ for i = 1:size(rects,1)
                 [pt, theta] = standard_bubble(bubble, boundary);
                 pts = [pts; pt];
                 thetas = [thetas; theta];
+                idxs = [idxs ; i];
             catch e
                 display(e);
             end
@@ -77,6 +80,8 @@ for i = 1:size(pts,1)
     pt2(2) = pt(2) + 10*sin(theta);
     plot([pt(1) pt2(1)], [pt(2) pt2(2)], '*r');
 end
+
+pts = pts ./ scalingFactor;
 
 
 
