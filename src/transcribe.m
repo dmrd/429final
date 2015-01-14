@@ -2,7 +2,7 @@ function transcribe( rootPath, dataset, testdir, classes, transcriptionDir )
 
 detections = [];
 for i = 1:size(classes,1)
-    [test_set, test_struct] = testComics(rootPath, classes{i}, dataset, testdir);
+    [test_set, test_struct] = testComics(rootPath, dataset, classes{i}, testdir);
     bb = cat(1,test_struct.unclipped_boxes{:});
     
     % Get rid of unnecessary columns.  Now we have the rectangles
