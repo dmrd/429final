@@ -3,9 +3,22 @@ figure;imshow(im); hold on;
 [xp, yp] = ginput(1);
 inside = getOverlappingRegions(regions, [xp, yp], mSize);
 plot(regions(inside), 'showPixelList', true, 'showEllipses', true);
-%bboxes = arrayfun(@x(x) ellipseBbox(x.Location(1), x.Location(2), ...
-%    x.Axes(1), x.Axes(2), x.Orientation), regions(inside));
-
+%bboxes = arrayfun(@(x) ellipseBbox(x.Location(1), x.Location(2), ...
+%    x.Axes(1), x.Axes(2), x.Orientation), regions(inside), 'UniformOutput', false);
+%bboxes = cell2mat(bboxes);
+%inside = max(bboxes);
+nReg = sum(inside)
+if nReg == 0
+    bbox = [0, 0, 0, 0];
+    return;
+elseif nReg == 1
+    p = regions(inside).PixelList;
+else
+    p = cell2mat(regions(inside).PixelList);
+end
+bbox = [min(p(:, 1)), min(p(:, 2)), max(p(:, 1)), max(p(:, 2))];
+bbox
+rectangle('Position', [bbox(1), bbox(2), bbox(3) - bbox(1), bbox(4) - bbox(2)]);
 end
 
 function containing = getOverlappingRegions(regions, pixel, mSize)
@@ -34,7 +47,7 @@ end
 function bbox = ellipseBbox(x, y, D, d, angle)
     %% Return approximate bbox in [minX, minY, maxX, maxY] format
     % D is major axis
-    xc = max(abs(D * cos(angle)), abs(d * cos(pi - angle)))
-    yc = max(abs(D * sin(angle)), abs(d * sin(pi - angle)))
-    bbox = [x - xc, y - yc, x + xc, y + yc]
+    xc = max(abs(D * cos(angle)), abs(d * cos(pi - angle)));
+    yc = max(abs(D * sin(angle)), abs(d * sin(pi - angle)));
+    bbox = [x - xc, y - yc, x + xc, y + yc];
 end
