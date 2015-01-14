@@ -1,0 +1,20 @@
+<annotation>
+<folder>VOC2012</folder>
+<filename>2014-05-25.jpg</filename>
+<size>
+<width>900</width>
+<height>636</height>
+<depth>3</depth>
+</size>
+<source><database>The VOC2012 Database</database><annotation>PASCAL VOC2012</annotation><image>flickr</image></source>
+<segmented>0</segmented>
+<object>
+<name>john</name>
+<bndbox>
+<xmin>697</xmin>
+<ymin>75</ymin>
+<xmax>762</xmax>
+<ymax>155</ymax>
+</bndbox>
+</object>
+</annotation>
