@@ -21,28 +21,30 @@ load([rootPath '/labels/' dataset '/' character 'PositiveInstances.mat']);
 numExamples = size(positiveInstances,2);
 neg_set = [];
 fidTrainval = fopen([imsetPath character '_trainval.txt'], 'w');
-fidTest = fopen([imsetPath character '_test.txt'], 'w');
+% fidTest = fopen([imsetPath character '_test.txt'], 'w');
+
 for i = 1:numExamples
     
     fileName = positiveInstances(i).imageFilename;
     im = imread(fileName);
-    posName = [imPath fileName];
+    posName = [imPath sprintf('1%.5d.jpg', i)];
     imwrite(im, posName, 'JPEG');
-    fprintf(fidTrainval, [fileName(1:end-4) ' 1\n']);
-    fprintf(fidTest, [fileName(1:end-4) ' 1\n']);
+    fprintf(fidTrainval, [sprintf('1%.5d', i) ' 1\n']);
+ %   fprintf(fidTest, [posName ' 1\n']);
     
     for j = 1:size(positiveInstances(i).objectBoundingBoxes,1)
         bb = positiveInstances(i).objectBoundingBoxes(j,:);
         im(bb(2):bb(2)+bb(4),bb(1):bb(1)+bb(3),:) = 255;
     end
-    negName = [imPath 'Neg-' fileName];
+    negName = [imPath sprintf('%.6d.jpg', i)];
     imwrite(im, negName, 'JPEG');
     neg_set = [neg_set; negName];
-    fprintf(fidTrainval, ['Neg-' fileName(1:end-4) ' -1\n']);
-    fprintf(fidTest, ['Neg-' fileName(1:end-4) ' -1\n']);
+    fprintf(fidTrainval, [sprintf('%.6d', i) ' -1\n']);
+%    fprintf(fidTest, ['Neg-' fileName(1:end-4) ' -1\n']);
+
 end
 fclose(fidTrainval);
-fclose(fidTest);
+% fclose(fidTest);
 
 neg_set = cellstr(neg_set);
 
@@ -101,8 +103,6 @@ train_params.detect_max_scale = 0.5;
 train_params.train_max_mined_images = 50;
 train_params.detect_exemplar_nms_os_threshold = 1.0;
 train_params.detect_max_windows_per_exemplar = 100;
-
-
 
 [models,models_name] = esvm_train_exemplars(initial_models, ...
                                             neg_set, train_params);
