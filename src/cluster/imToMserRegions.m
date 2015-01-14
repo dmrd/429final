@@ -20,6 +20,7 @@ function result = imToMserRegions(im)
     F = getframe;
     [colored, Map] = frame2im(F);
     result = colored;
+    figure('Visible', 'on');
     %[result, Map] = cmunique(colored);
     %result(result == 1) = NaN;
     
