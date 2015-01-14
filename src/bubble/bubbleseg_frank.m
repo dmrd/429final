@@ -1,11 +1,11 @@
-function [ rects text ] = bubbleseg(comicImg)
+clear
 
 %[comicImg, map] = imread('dilbert/2014-12-23.gif', 'gif');
 %[comicImg, map] = imread('garfield/27-1-1983.gif', 'gif');
-%[comicImg, map] = imread('garfield/garfieldminusgarfield.jpg', 'jpg');
+comicImg = imread('phdcomic.jpg');
 
-%figure(10);
-%imshow(comicImg, map);
+figure(10);
+imshow(comicImg);
 
 comicImg = rgb2gray(comicImg);
 
@@ -13,8 +13,8 @@ comicImg = rgb2gray(comicImg);
 
 bwImg = im2bw(comicImg, 0.3);
 
-%figure(23);
-%imshow(bwImg);
+figure(23);
+imshow(bwImg);
 
 % Create bounding boxes for the black components
 
@@ -30,13 +30,14 @@ for i = 1:size(CC.PixelIdxList, 2)
 end
 
 % Display the bounding boxes
-%for j = 1:size(boundingBoxes, 1)
-%    rectangle('Position', boundingBoxes(j,:));
-%end
-
-%figure(24);
-%imshow(bwImg);
-
+for j = 1:size(boundingBoxes, 1)
+    rectangle('Position', boundingBoxes(j,:));
+end
+imshow(bwImg)
+pause
+figure(24);
+imshow(bwImg);
+pause
 % Filter bounding boxes which are too big or too small
 filteredBoundingBoxes = []; % [x, y]
 boundingBoxCentres = [];
@@ -46,15 +47,22 @@ for j = 1:size(boundingBoxes, 1)
     if area > 10 & area < 200
         filteredBoundingBoxes = [filteredBoundingBoxes; boundingBoxes(j,:)];
         boundingBoxCentres = [boundingBoxCentres; [boundingBoxes(j,1) + boundingBoxes(j,3) / 2, boundingBoxes(j,2) + boundingBoxes(j,4) / 2]];
-        %rectangle('Position', boundingBoxes(j,:));
+        rectangle('Position', boundingBoxes(j,:));
     end
 end
 
-%hold on;
-%plot(boundingBoxCentres(:,1), boundingBoxCentres(:,2), 'r+');
+hold on;
+plot(boundingBoxCentres(:,1), boundingBoxCentres(:,2), 'r+');
 
 averageBoxWidth = sum(filteredBoundingBoxes(:,3)) / size(filteredBoundingBoxes,1);
 averageBoxHeight = sum(filteredBoundingBoxes(:,4)) / size(filteredBoundingBoxes,1);
+
+% Try ransac line fitting
+XYZ = double([boundingBoxCentres zeros(size(boundingBoxCentres,1),1)]);
+[L, inliers] = ransacfitline(XYZ', averageBoxHeight, 1);
+L = L(1:2,:)';
+plot(L(:,1), L(:,2), 'go');
+pause;
 
 % The 5th column is merged box which each box is a part of. Zero indicates it has not
 % been merged.
@@ -111,34 +119,27 @@ for i = 1:numOriginalBoxes
     parentBoxMap(i) = parent;
 end
 
-%figure(30);
-%imshow(bwImg);
+figure(30);
+imshow(bwImg);
 
 filteredBoundingBoxes = filteredBoundingBoxes(filteredBoundingBoxes(:,5) == 0,:);
-%for i = 1:size(filteredBoundingBoxes,1)
-%    rectangle('Position', filteredBoundingBoxes(i,1:4));
-%end
+for i = 1:size(filteredBoundingBoxes,1)
+    rectangle('Position', filteredBoundingBoxes(i,1:4));
+end
 
 % Upsample the image to improve OCR perferformance
 comicImg = imresize(comicImg, 4, 'lanczos3');
 
-%figure(31);
-%imshow(comicImg);
+figure(31);
+imshow(comicImg);
 
 % Resize the bounding boxes accordingly, and give a little bit of wriggle
 % room.
 filteredBoundingBoxes(:,1:4) = filteredBoundingBoxes(:,1:4) * 4;
 filteredBoundingBoxes(:,1:2) = filteredBoundingBoxes(:,1:2) - 5;
 filteredBoundingBoxes(:,3:4) = filteredBoundingBoxes(:,3:4) + 10;
-
-% Snap to box
-
-filteredBoundingBoxes(:, 3) = min(filteredBoundingBoxes(:, 3), size(comicImg, 2) - filteredBoundingBoxes(:, 1)); % width
-filteredBoundingBoxes(:, 4) = min(filteredBoundingBoxes(:, 4), size(comicImg, 1) - filteredBoundingBoxes(:, 2)); % height
-filteredBoundingBoxes(:, 1:2) = max(filteredBoundingBoxes(:, 1:2), 1);
-
 for i = 1:size(filteredBoundingBoxes,1)
- %   rectangle('Position', filteredBoundingBoxes(i,1:4));
+    rectangle('Position', filteredBoundingBoxes(i,1:4));
 end
 
 % Perform the OCR
@@ -152,45 +153,88 @@ for i = 1:size(txt)
     end
 end
 
-%figure(32);
-%imshow(comicImg);
+figure(32);
+imshow(comicImg);
 mergedBoundingBoxExists = containers.Map('KeyType', 'int32', 'ValueType', 'int32');
 for i = 1:size(textBoundingBoxes,1)
-%    rectangle('Position', textBoundingBoxes(i,1:4));
+    rectangle('Position', textBoundingBoxes(i,1:4));
     mergedBoundingBoxExists(textBoundingBoxes(i,6)) = 1;
 end
 
 
 letterBoundingBoxes = [];
 
-%figure(33);
-%imshow(comicImg); hold on;
+figure(33);
+imshow(comicImg);
 for i = 1:numOriginalBoxes
     hold on;
     if mergedBoundingBoxExists.isKey(parentBoxMap(i))
         letterBoundingBoxes = [letterBoundingBoxes; copyOfFilteredBoundingBoxes(i,:)];
-%        rectangle('Position', copyOfFilteredBoundingBoxes(i,1:4)*4);
-%        plot(copyOfFilteredBoundingBoxes(i,1)*4, copyOfFilteredBoundingBoxes(i,2)*4, 'r+');
+        rectangle('Position', copyOfFilteredBoundingBoxes(i,1:4)*4);
+        plot(copyOfFilteredBoundingBoxes(i,1)*4, copyOfFilteredBoundingBoxes(i,2)*4, 'r+');
     end
 end
 
-% Filter bounding boxes which are too big or too small
-reFilteredBoundingBoxes = [];
-for j = 1:size(textBoundingBoxes, 1)
-    area = textBoundingBoxes(j, 3) * textBoundingBoxes(j, 4);
-    if area > 1000
-        reFilteredBoundingBoxes = [reFilteredBoundingBoxes; textBoundingBoxes(j,:)];
-    end
-end
+size(letterBoundingBoxes)
 
 % Reperform the OCR
-comicImg = im2bw(comicImg, 0.8);
-ocrText = ocr(comicImg, reFilteredBoundingBoxes(:,1:4));
-ocrText.Text
+txt = ocr(comicImg, textBoundingBoxes(:,1:4));
+txt.Text
 
-text = {};
-for i = 1:size(ocrText, 1)
-    text{i} = ocrText(i).Text;
-end
 
-rects = fix(reFilteredBoundingBoxes(:,1:4) ./ 4);
+
+%{
+comicImg = imresize(comicImg, 4, 'lanczos3');
+figure(100)
+imshow(comicImg)
+
+% Detect and extract region
+mserRegions = detectMSERFeatures(comicImg, 'RegionAreaRange', [15, 500], 'ThresholdDelta', 3, 'MaxAreaVariation', 0.1);
+mserRegionsPixels = cell2mat(mserRegions.PixelList);
+
+hold on;
+plot(mserRegions, 'showPixelList', true, 'showEllipses', false);
+title('MSER regions');
+
+% Convert MSER pixel lists to a binary mask
+mserMask = false(size(comicImg));
+ind = sub2ind(size(mserMask), mserRegionsPixels(:,2), mserRegionsPixels(:,1));
+mserMask(ind) = true;
+
+% Run the edge detector
+edgeMask = edge(comicImg, 'Canny');
+
+% Find intersection between edges and MSER regions
+edgeAndMSERIntersection = edgeMask & mserMask;
+figure;
+imshowpair(edgeMask, edgeAndMSERIntersection, 'montage');
+title('Canny edges and intersection of canny edges with MSER regions');
+
+[~, gDir] = imgradient(comicImg);
+% You must specify if the text is light on dark background or vice versa
+gradientGrownEdgesMask = helperGrowEdges(edgeAndMSERIntersection, gDir, 'DarkTextOnLight');
+figure;
+imshow(gradientGrownEdgesMask);
+title('Edges grown along gradient direction');
+
+% Remove gradient grown edge pixels
+edgeEnhancedMSERMask = ~gradientGrownEdgesMask & mserMask;
+
+% Visualize the effect of segmentation
+figure; imshowpair(mserMask, edgeEnhancedMSERMask, 'montage');
+title('Original MSER regions and segmented MSER regions')
+
+se1=strel('disk',25);
+se2=strel('disk',7);
+
+afterMorphologyMask = imclose(edgeEnhancedMSERMask,se1);
+afterMorphologyMask = imopen(afterMorphologyMask,se2);
+
+% Display image region corresponding to afterMorphologyMask
+displayImage = comicImg;
+size(displayImage)
+displayImage(~repmat(afterMorphologyMask,1,1,3)) = 0;
+size(displayImage)
+figure; imshow(displayImage, map); title('Image region under mask created by joining individual characters')
+
+%}

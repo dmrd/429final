@@ -7,13 +7,14 @@ rects = rects * scalingFactor;
 
 grayImg = rgb2gray(comicImg);
 bwImg = im2bw(comicImg, 0.8);
+bwImg = drawTopLine(bwImg);
 
 cc = bwlabel(bwImg,4);
 
-figure(12123); imshow(bwImg); hold on;
-for i = 1:size(rects,1)
-    rectangle('Position', rects(i,:), 'EdgeColor', 'red');
-end
+%figure(12123); imshow(bwImg); hold on;
+%for i = 1:size(rects,1)
+%    rectangle('Position', rects(i,:), 'EdgeColor', 'red');
+%end
 
 pts = [];
 thetas = [];
@@ -41,7 +42,7 @@ for i = 1:size(rects,1)
         % Check if the bubble is a thought bubble
         [centers, radii, metric] = imfindcircles(bubble,[5,20]);
         %figure;
-        %imshow(bubble), hold on;
+        %imshow(bubble);% hold on;
         %viscircles(centers, radii,'EdgeColor','b');
         if size(centers,1) > 10
             bwImgCopy = bwImg;
@@ -51,7 +52,7 @@ for i = 1:size(rects,1)
                 thetas = [thetas; theta];
                 idxs = [idxs ; i];
             catch e
-                display(e);
+                %display(e);
             end
         else
             bwImgCopy = bwImg;
@@ -61,7 +62,7 @@ for i = 1:size(rects,1)
                 thetas = [thetas; theta];
                 idxs = [idxs ; i];
             catch e
-                display(e);
+                %display(e);
             end
             
         end
@@ -70,18 +71,17 @@ for i = 1:size(rects,1)
     
 end
 
-figure(85);
-imshow(bwImg); hold on;
+%figure(85);
+%imshow(bwImg); hold on;
 for i = 1:size(pts,1)
     pt = pts(i,:);
     theta = thetas(i,:);
     pt2 = [0 0];
-    pt2(1) = pt(1) + 10*cos(theta);
-    pt2(2) = pt(2) + 10*sin(theta);
-    plot([pt(1) pt2(1)], [pt(2) pt2(2)], '*r');
+    pt2(1) = pt(1) + 30*cos(theta);
+    pt2(2) = pt(2) + 30*sin(theta);
+%    line([pt(1) pt2(1)], [pt(2) pt2(2)], 'Color', 'red', 'LineWidth', 4);
 end
 
 pts = pts ./ scalingFactor;
-
 
 

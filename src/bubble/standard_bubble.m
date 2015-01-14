@@ -6,22 +6,22 @@ C = C(length(C),:);
 
 bubbleBoundary = false(size(bubble));
 
-figure;
-imshow(bubbleBoundary);
-hold on
+%figure;
+%imshow(bubbleBoundary);
+%hold on
 
-plot(boundary(:,1), boundary(:,2), 'w', 'LineWidth', 2);
+%plot(boundary(:,1), boundary(:,2), 'w', 'LineWidth', 2);
 
 distances = zeros(length(boundary),1);
 for i = 1:length(boundary)
-    distances(i) = dist(C,boundary(i,:));
+    distances(i) = norm(C - boundary(i,:));
 end
 [~, closestIdx] = min(distances);
 closestPt = boundary(closestIdx,:);
 
 ptsNearCorner = [boundary(closestIdx-15:closestIdx-1, :) ; ...
                  boundary(closestIdx+1:closestIdx+15, :) ];
-plot(ptsNearCorner(:,1), ptsNearCorner(:,2), '*r');
+%plot(ptsNearCorner(:,1), ptsNearCorner(:,2), '*r');
 
 thetas = zeros(size(ptsNearCorner,1),1);
 for i = 1:size(ptsNearCorner,1)
